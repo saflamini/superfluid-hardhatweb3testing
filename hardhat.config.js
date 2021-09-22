@@ -34,7 +34,8 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://eth-goerli.alchemyapi.io/v2/0oUienyPPZvcm4S2HjtHxCBN8liwqfgf",
+        //your rpc url here
+        url: "",
         blockNumber: 5446693
     },
   },
