@@ -1,5 +1,11 @@
+require('dotenv').config()
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-truffle5");
+
+//enter RPC url here
+const ALCHEMY_URL = process.env.ALCHEMY_URL;
+//enter impersonating account here
+const myAccount = process.env.ACCOUNT;
 
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -13,12 +19,11 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 task("unlock", "set up impersonating accounts", async () => {
-  //list impersonating accounts here
-  const acct = "";
+  console.log(ALCHEMY_URL)
   //method to unlock the accounts
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
-    params: [acct],
+    params: [myAccount],
   });
 
   console.log("impersonating account: " + acct);
@@ -35,7 +40,7 @@ module.exports = {
     hardhat: {
       forking: {
         //your rpc url here
-        url: "",
+        url: `${ALCHEMY_URL}`,
         blockNumber: 5446693
     },
   },

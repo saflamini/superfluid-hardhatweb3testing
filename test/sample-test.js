@@ -1,9 +1,11 @@
+require('dotenv').config();
 const { expect } = require("chai");
 const { artifacts } = require("hardhat");
 const hre = require("hardhat");
 const hostABI = require("@superfluid-finance/ethereum-contracts/build/contracts/Superfluid.json");
 const cfaABI = require("@superfluid-finance/ethereum-contracts/build/contracts/ConstantFlowAgreementV1.json");
-const fUSDCx = require("./fUSDCx")
+const fUSDCx = require("./fUSDCx");
+const myAccount = process.env.ACCOUNT;
 
 const getProvider = (() => {
 
@@ -39,11 +41,11 @@ let acct2;
 let superUSDC;
 
 beforeEach(async () => {
-
     //truffle version of testing with web3 to keep it consistent
+    console.log(myAccount)
     redirectAll = await RedirectAll.new("0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9", "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", "0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")
-
-    tradeableCashflow = await TradeableCashflow.new("0x5966aa11c794893774a382d9a19743B8be6BFFd1", "Holy Grail", "GRAIL", "0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9", "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", "0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a")
+    
+    tradeableCashflow = await TradeableCashflow.new(myAccount, "Holy Grail", "GRAIL", "0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9", "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", "0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a")
 
     //get contract instances of each of the protocol contracts using web3.js 
     _host = new hre.web3.eth.Contract(hostABI.abi, "0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9");
@@ -51,7 +53,7 @@ beforeEach(async () => {
     superUSDC = new hre.web3.eth.Contract(fUSDCx, "0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a");
 
     //account that we know has fUSDCx
-    acct1 = "0x5966aa11c794893774a382d9a19743B8be6BFFd1";
+    acct1 = myAccount;
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
       params: [acct1],
@@ -67,7 +69,7 @@ beforeEach(async () => {
 
   it("Initial flow is correct", async function () {
     
-    const netFlowBeforeGrail = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x5966aa11c794893774a382d9a19743B8be6BFFd1").call();
+    const netFlowBeforeGrail = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", myAccount).call();
   
     //create a flow to our tradeable cash flow holy grail nft
     const tx = await _cfa.methods.createFlow(
@@ -79,10 +81,10 @@ beforeEach(async () => {
     .encodeABI()
     //create flow...
     await _host.methods.callAgreement(
-      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: "0x5966aa11c794893774a382d9a19743B8be6BFFd1", type: "0x2"})
+      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: myAccount, type: "0x2"})
 
-    const grailflowInfo = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x5966aa11c794893774a382d9a19743B8be6BFFd1", tradeableCashflow.address).call();
-    const netFlowAfterGrail = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x5966aa11c794893774a382d9a19743B8be6BFFd1").call();
+    const grailflowInfo = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", myAccount, tradeableCashflow.address).call();
+    const netFlowAfterGrail = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", myAccount).call();
 
     const receiverArray = await tradeableCashflow.currentReceiver();
     console.log("Net Flow Before Grail: " + netFlowBeforeGrail);
@@ -90,7 +92,7 @@ beforeEach(async () => {
     console.log("Flow Rate: " + grailflowInfo.flowRate);
    
     //flow should be sent to the minter of tradable cashflow
-    expect(Number(receiverArray[1])).to.equal(Number("0x5966aa11c794893774a382d9a19743B8be6BFFd1"));
+    expect(Number(receiverArray[1])).to.equal(Number(myAccount));
     //flow rate should be the flow rate that we entered initially
     expect(grailflowInfo.flowRate.toString()).to.equal("385802469135802");
     //our initial owner should have an effective change in flow rate of 0 - they're sending value to themselves
@@ -109,9 +111,9 @@ beforeEach(async () => {
   .encodeABI()
   //create flow...
     await _host.methods.callAgreement(
-      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: "0x5966aa11c794893774a382d9a19743B8be6BFFd1", type: "0x2"})
+      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: myAccount, type: "0x2"})
 
-const grailFlowInfoBeforeUpdate = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x5966aa11c794893774a382d9a19743B8be6BFFd1", tradeableCashflow.address).call();
+const grailFlowInfoBeforeUpdate = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", myAccount, tradeableCashflow.address).call();
 //update flow to our tradeable cash flow holy grail nft
     const updateTx = await _cfa.methods.updateFlow(
       "0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a",
@@ -122,9 +124,9 @@ const grailFlowInfoBeforeUpdate = await _cfa.methods.getFlow("0x8aE68021f6170E5a
   .encodeABI()
   //create flow...
     await _host.methods.callAgreement(
-      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", updateTx, "0x").send({from: "0x5966aa11c794893774a382d9a19743B8be6BFFd1", type: "0x2"})
+      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", updateTx, "0x").send({from: myAccount, type: "0x2"})
 
-    const grailflowInfo = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x5966aa11c794893774a382d9a19743B8be6BFFd1", tradeableCashflow.address).call();
+    const grailflowInfo = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", myAccount, tradeableCashflow.address).call();
 
     console.log("Grail flow before update: " + grailFlowInfoBeforeUpdate.flowRate.toString());
     console.log("Grail flow after update: " + grailflowInfo.flowRate.toString());
@@ -144,13 +146,13 @@ const grailFlowInfoBeforeUpdate = await _cfa.methods.getFlow("0x8aE68021f6170E5a
     .encodeABI()
     //create flow...
       await _host.methods.callAgreement(
-      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: "0x5966aa11c794893774a382d9a19743B8be6BFFd1", type: "0x2"})
+      "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: myAccount, type: "0x2"})
 
-      const grailflowInfo = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x5966aa11c794893774a382d9a19743B8be6BFFd1", tradeableCashflow.address).call();
-      const userFlowInfo = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x5966aa11c794893774a382d9a19743B8be6BFFd1").call();
+      const grailflowInfo = await _cfa.methods.getFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", myAccount, tradeableCashflow.address).call();
+      const userFlowInfo = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", myAccount).call();
 
       // transfer the holy grail to a new user
-      await tradeableCashflow.contract.methods.transferFrom("0x5966aa11c794893774a382d9a19743B8be6BFFd1", "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", 1).send({from: "0x5966aa11c794893774a382d9a19743B8be6BFFd1"})
+      await tradeableCashflow.contract.methods.transferFrom(myAccount, "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", 1).send({from: myAccount})
 
       const newUserFlow = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199").call();
       console.log("newUserFlow: " + newUserFlow);
@@ -179,10 +181,10 @@ const grailFlowInfoBeforeUpdate = await _cfa.methods.getFlow("0x8aE68021f6170E5a
       .encodeABI()
       //create flow...
         await _host.methods.callAgreement(
-        "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: "0x5966aa11c794893774a382d9a19743B8be6BFFd1", type: "0x2"})
+        "0xEd6BcbF6907D4feEEe8a8875543249bEa9D308E8", tx, "0x").send({from: myAccount, type: "0x2"})
   
         // transfer the holy grail to a new user
-        await tradeableCashflow.contract.methods.transferFrom("0x5966aa11c794893774a382d9a19743B8be6BFFd1", "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", 1).send({from: "0x5966aa11c794893774a382d9a19743B8be6BFFd1"})
+        await tradeableCashflow.contract.methods.transferFrom(myAccount, "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", 1).send({from: myAccount})
   
         const newUserFlow = await _cfa.methods.getNetFlow("0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a", "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199").call();
         console.log("newUserFlow: " + newUserFlow);
