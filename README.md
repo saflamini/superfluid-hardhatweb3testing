@@ -1,4 +1,6 @@
-Test a super app using Hardhat + the web3/truffle plugin
+Test a super app using Hardhat + the web3/truffle plugin.
+
+NOTE: This was designed for the Goerli Ethereum testnet. Several address values are hardcoded with this assumption.
 
 Step 1: npm install.
 
