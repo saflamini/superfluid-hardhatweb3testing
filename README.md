@@ -1,8 +1,9 @@
 Test a super app using Hardhat + the web3/truffle plugin
 
 In hardhat.config, make sure to:
-1) Add your own account to impersonate in the first task
-2) Add your own RPC URL in the network settings & choose your own block to pin if needed
+1) Add your own account to impersonate in the first task.
+2) Add your own RPC URL in the network settings & choose your own block to pin if needed.
+
 Both of these should be done in a .env file
 
 # Basic Sample Hardhat Project
